@@ -279,27 +279,28 @@ class EthernetNetworkFactory {
                         return;
                     }
                     linkProperties = config.getStaticIpConfiguration().toLinkProperties(mIface);
+                    mNetworkInfo.setDetailedState(DetailedState.CONNECTED, null, mHwAddr);
                 } else {
                     mNetworkInfo.setDetailedState(DetailedState.OBTAINING_IPADDR, null, mHwAddr);
-
-                    DhcpResults dhcpResults = new DhcpResults();
-                    // TODO: Handle DHCP renewals better.
-                    // In general runDhcp handles DHCP renewals for us, because
-                    // the dhcp client stays running, but if the renewal fails,
-                    // we will lose our IP address and connectivity without
-                    // noticing.
-                    if (!NetworkUtils.runDhcp(mIface, dhcpResults)) {
-                        Log.e(TAG, "DHCP request error:" + NetworkUtils.getDhcpError());
-                        // set our score lower than any network could go
-                        // so we get dropped.
-                        mFactory.setScoreFilter(-1);
-                        // If DHCP timed out (as opposed to failing), the DHCP client will still be
-                        // running, because in M we changed its timeout to infinite. Stop it now.
-                        NetworkUtils.stopDhcp(mIface);
-                        return;
-                    }
-                    linkProperties = dhcpResults.toLinkProperties(mIface);
                 }
+                DhcpResults dhcpResults = new DhcpResults();
+                // TODO: Handle DHCP renewals better.
+                // In general runDhcp handles DHCP renewals for us, because
+                // the dhcp client stays running, but if the renewal fails,
+                // we will lose our IP address and connectivity without
+                // noticing.
+                if (!NetworkUtils.runDhcp(mIface, dhcpResults)) {
+                    Log.e(TAG, "DHCP request error:" + NetworkUtils.getDhcpError());
+                    // set our score lower than any network could go
+                    // so we get dropped.
+                    mFactory.setScoreFilter(-1);
+                    // If DHCP timed out (as opposed to failing), the DHCP client will still be
+                    // running, because in M we changed its timeout to infinite. Stop it now.
+                    NetworkUtils.stopDhcp(mIface);
+                    return;
+                }
+                linkProperties = dhcpResults.toLinkProperties(mIface);
+
                 if (config.getProxySettings() == ProxySettings.STATIC ||
                         config.getProxySettings() == ProxySettings.PAC) {
                     linkProperties.setHttpProxy(config.getHttpProxy());
